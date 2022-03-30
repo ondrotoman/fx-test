@@ -4,20 +4,21 @@ namespace App\Listeners;
 
 use App\Models\ActivityLog;
 use Illuminate\Queue\InteractsWithQueue;
+use App\Src\Contracts\CreateActivityLogs;
 use Illuminate\Contracts\Queue\ShouldQueue;
 
 class SuccessfulLogin
 {
-    private ActivityLog $log;
+    private CreateActivityLogs $creator;
 
     /**
      * Create the event listener.
      *
      * @return void
      */
-    public function __construct(ActivityLog $log)
+    public function __construct(CreateActivityLogs $creator)
     {
-        $this->log = $log;
+        $this->creator = $creator;
     }
 
     /**
@@ -28,11 +29,14 @@ class SuccessfulLogin
      */
     public function handle($event)
     {
-        if ($event->user) {
-            $this->log->user_id = $event->user->id;
-            $this->log->action = 'login';
-            $this->log->result = 'successful';
-            $this->log->save();
+        if (!$event->user) { 
+            return false;
         }
+        
+        $this->creator->create(
+            $event->user,
+            'Prihlásenie',
+            'successful',
+        );
     }
 }
